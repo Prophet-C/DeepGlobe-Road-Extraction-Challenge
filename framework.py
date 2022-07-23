@@ -34,7 +34,7 @@ class MyFrame():
     
     def test_batch(self):
         self.forward(volatile=True)
-        mask =  self.net.forward(self.img).cpu().data.numpy().squeeze(1)
+        mask = self.net.forward(self.img).cpu().data.numpy().squeeze(1)
         mask[mask>0.5] = 1
         mask[mask<=0.5] = 0
         
@@ -71,7 +71,7 @@ class MyFrame():
     def load(self, path):
         self.net.load_state_dict(torch.load(path))
     
-    def update_lr(self, new_lr, mylog, factor=False):
+    def update_lr(self, new_lr, factor=False):
         if factor:
             new_lr = self.old_lr / new_lr
         for param_group in self.optimizer.param_groups:

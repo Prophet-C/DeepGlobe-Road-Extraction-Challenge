@@ -64,18 +64,10 @@ class Logger:
         if self.file is not None:
             self.file.close()
 
-def save_logger(config, output):
+def save_logger(output, filename = 'log.txt'):
     print('Output directory path: {}'.format(output), flush=True)
     os.makedirs(output, exist_ok=True)
-    # Save config
-    # FIXME: saved config file is not beautified.
-    config_save_path = osp.join(output, 'config.yml')
-    with open(config_save_path, 'w') as f:
-        yaml.dump(config,
-                  f,
-                  default_flow_style=False,
-                  sort_keys=False,
-                  indent=2)
+
     # save log file
-    fpath = osp.join(output, 'log.txt')
+    fpath = osp.join(output, filename)
     sys.stdout = Logger(fpath)

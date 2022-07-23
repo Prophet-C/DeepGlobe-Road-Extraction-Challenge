@@ -137,7 +137,7 @@ class DinkNet34(nn.Module):
         out = self.finalrelu2(out)
         out = self.finalconv3(out)
 
-        return F.sigmoid(out)
+        return torch.sigmoid(out)
 
 class DinkNet50(nn.Module):
     def __init__(self, num_classes=1):
