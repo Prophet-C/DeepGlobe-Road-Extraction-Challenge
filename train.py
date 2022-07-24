@@ -16,6 +16,7 @@ from framework import MyFrame
 from loss import dice_bce_loss
 from data import ImageFolder
 
+@torch.no_grad()
 def test(net, dataloader):
     evaluator = Evaluator(2)
     net.eval()
@@ -24,8 +25,21 @@ def test(net, dataloader):
     tbar = tqdm(data_iter)
 
     for img, mask in tbar:
-        
-        pass
+        pred = net.forward(img).cpu().data.numpy().squeeze(1)
+        pred[pred>0.5] = 1
+        pred[pred<=0.5] = 0
+        evaluator.add_batch(mask, pred)
+
+    Acc = evaluator.Pixel_Accuracy()
+    Acc_class = evaluator.Pixel_Accuracy_Class()
+    mIoU = evaluator.Mean_Intersection_over_Union()
+    IoU = evaluator.Intersection_over_Union()
+    Precision = evaluator.Pixel_Precision()
+    Recall = evaluator.Pixel_Recall()
+    F1 = evaluator.Pixel_F1()
+    print("Val results:")
+    print("Acc:{}, Acc_class:{}, mIoU:{}, IoU:{}, Precision:{}, Recall:{}, F1:{}"
+          .format(Acc, Acc_class, mIoU, IoU, Precision, Recall, F1))
 
 output_dir = 'results/dink34_rgb_only_exp0'
 save_logger(output_dir)

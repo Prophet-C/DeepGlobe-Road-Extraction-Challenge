@@ -94,7 +94,7 @@ def resize(image, mask, shape):
 
     return image, mask
 
-def default_loader(id, root):
+def default_loader(id, root, val=False):
     img_root = os.path.join(root, 'rgb')
     mask_root = os.path.join(root, 'mask')
     img = cv2.imread(os.path.join(img_root+'/{}.png').format(id))
@@ -102,41 +102,46 @@ def default_loader(id, root):
     
     img, mask = resize(img, mask, (512, 512))
 
-    img = randomHueSaturationValue(img,
-                                   hue_shift_limit=(-30, 30),
-                                   sat_shift_limit=(-5, 5),
-                                   val_shift_limit=(-15, 15))
-    
-    img, mask = randomShiftScaleRotate(img, mask,
-                                       shift_limit=(-0.1, 0.1),
-                                       scale_limit=(-0.1, 0.1),
-                                       aspect_limit=(-0.1, 0.1),
-                                       rotate_limit=(-0, 0))
-    img, mask = randomHorizontalFlip(img, mask)
-    img, mask = randomVerticleFlip(img, mask)
-    img, mask = randomRotate90(img, mask)
-    
+    if not val:
+        img = randomHueSaturationValue(img,
+                                    hue_shift_limit=(-30, 30),
+                                    sat_shift_limit=(-5, 5),
+                                    val_shift_limit=(-15, 15))
+        
+        img, mask = randomShiftScaleRotate(img, mask,
+                                        shift_limit=(-0.1, 0.1),
+                                        scale_limit=(-0.1, 0.1),
+                                        aspect_limit=(-0.1, 0.1),
+                                        rotate_limit=(-0, 0))
+        img, mask = randomHorizontalFlip(img, mask)
+        img, mask = randomVerticleFlip(img, mask)
+        img, mask = randomRotate90(img, mask)
+        
     mask = np.expand_dims(mask, axis=2)
     img = np.array(img, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
     mask = np.array(mask, np.float32).transpose(2,0,1)#/255.0
     mask[mask>=0.5] = 1
     mask[mask<=0.5] = 0
-    #mask = abs(mask-1)
+    #mask = abs(mask-1) 
     return img, mask
 
 class ImageFolder(data.Dataset):
 
-    def __init__(self, trainlist, root):
+    def __init__(self, trainlist, root, val=False):
         self.ids = trainlist
         self.loader = default_loader
         self.root = root
+        self.val = val
 
     def __getitem__(self, index):
         id = self.ids[index]
-        img, mask = self.loader(id, self.root)
+        if not self.val:
+            img, mask = self.loader(id, self.root)
+        else:
+            img, mask = self.loader(id, self.root, val=True)
         img = torch.Tensor(img)
         mask = torch.Tensor(mask)
-        return img, mask
+        return img, mask, id
 
     def __len__(self):
         return len(self.ids)

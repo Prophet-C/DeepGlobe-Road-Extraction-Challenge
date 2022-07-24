@@ -1,4 +1,6 @@
 *temp*
 __pycache__
 weights
-results
+results/
+submits/
+*.png

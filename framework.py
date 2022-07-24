@@ -50,7 +50,7 @@ class MyFrame():
         mask[mask<=0.5] = 0
         
         return mask
-        
+
     def forward(self, volatile=False):
         self.img = V(self.img.cuda(), volatile=volatile)
         if self.mask is not None:

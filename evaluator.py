@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import confusion_matrix
 
 
 class Evaluator(object):
@@ -27,8 +28,8 @@ class Evaluator(object):
         f1 = 2 * self.precision * self.recall / (self.precision + self.recall)
         return f1
 
-    def Intersection_over_Union(self):
-        IoU = self.confusion_matrix[1, 1] / (self.confusion_matrix[1, 1] + self.confusion_matrix[1, 0] + self.confusion_matrix[0, 1] + 1e-10)
+    def Intersection_over_Union(self, class_index=1):
+        IoU = self.confusion_matrix[class_index, class_index] / (self.confusion_matrix[class_index, class_index] + self.confusion_matrix[1, 0] + self.confusion_matrix[0, 1] + 1e-10)
         return IoU
 
     def Mean_Intersection_over_Union(self):
@@ -60,6 +61,11 @@ class Evaluator(object):
 
     def reset(self):
         self.confusion_matrix = np.zeros((self.num_class,) * 2)
+
+    def add_batch_sklearn(self, gt_image, pre_image):
+        temp = confusion_matrix(gt_image.reshape(-1), pre_image.reshape(-1), labels=[0, 1])
+
+        self.confusion_matrix += temp
 
 
 
