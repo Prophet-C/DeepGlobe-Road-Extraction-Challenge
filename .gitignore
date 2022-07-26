@@ -4,3 +4,4 @@ weights
 results/
 submits/
 *.png
+*-backup*

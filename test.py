@@ -9,8 +9,8 @@ import numpy as np
 
 from time import time
 from tqdm import tqdm
-from evaluator import Evaluator
-from logger import save_logger
+from utils.evaluator import Evaluator
+from utils.logger import save_logger
 from networks.dinknet import DinkNet34
 from framework import MyFrame
 from loss import dice_bce_loss
@@ -43,20 +43,20 @@ def test(net, dataloader):
         cv2.imwrite(img_dir +id[0]+'_compare.png',temp)
         index = index + 1
         
-
+    class_index = 1
     Acc = evaluator.Pixel_Accuracy()
     Acc_class = evaluator.Pixel_Accuracy_Class()
     mIoU = evaluator.Mean_Intersection_over_Union()
-    IoU = evaluator.Intersection_over_Union(class_index=1)
+    IoU = evaluator.Intersection_over_Union(class_index)
     Precision = evaluator.Pixel_Precision()
     Recall = evaluator.Pixel_Recall()
     F1 = evaluator.Pixel_F1()
     print("Val results:")
-    print("Acc:{}, Acc_class:{}, mIoU:{}, IoU:{}, Precision:{}, Recall:{}, F1:{}"
-          .format(Acc, Acc_class, mIoU, IoU, Precision, Recall, F1))
+    print("Acc:{}, Acc_class:{}, mIoU:{}, IoU:{}(class{}), Precision:{}, Recall:{}, F1:{}"
+          .format(Acc, Acc_class, mIoU, IoU, class_index, Precision, Recall, F1))
 
 
-output_dir = 'results/dink34_rgb_only_exp0'
+output_dir = 'results/dink34_lpu_only_exp1'
 save_logger(output_dir, filename="log_val.txt")
 
 SHAPE = (512,512)

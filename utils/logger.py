@@ -64,8 +64,14 @@ class Logger:
         if self.file is not None:
             self.file.close()
 
-def save_logger(output, filename = 'log.txt'):
+def save_logger(output, force_merge=False, filename = 'log.txt'):
     print('Output directory path: {}'.format(output), flush=True)
+
+    if os.path.exists(output) and not force_merge:
+        ans = input('Exp dir already exists, merge it? (y/n)')
+        if ans not in ['yes', 'Yes', 'YES', 'y', 'Y', 'can']:
+            quit()
+
     os.makedirs(output, exist_ok=True)
 
     # save log file

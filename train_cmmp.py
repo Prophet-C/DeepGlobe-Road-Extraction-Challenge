@@ -12,9 +12,11 @@ from tqdm import tqdm
 from utils.evaluator import Evaluator
 from utils.logger import save_logger
 from networks.dinknet import DinkNet34
-from framework import MyFrame
+from networks.dinknet_cmmp import DinkNet34CMMP
+from framework import MyFrame, FusionFrame
 from loss import dice_bce_loss
 from data import ImageFolder
+from dataloader import TLCGISDataset
 
 @torch.no_grad()
 def test(net, dataloader):
@@ -41,8 +43,8 @@ def test(net, dataloader):
     print("Acc:{}, Acc_class:{}, mIoU:{}, IoU:{}, Precision:{}, Recall:{}, F1:{}"
           .format(Acc, Acc_class, mIoU, IoU, Precision, Recall, F1))
 
-output_dir = 'results/dink34_lpu_only_exp1'
-save_logger(output_dir)
+output_dir = 'results/dink34_fusion_exp0'
+save_logger(output_dir, force_merge=True)
 
 SHAPE = (512,512)
 ROOT = 'dataset/TLCGIS/'
@@ -50,32 +52,22 @@ ROOT = 'dataset/TLCGIS/'
 # trainlist = map(lambda x: x[:-8], imagelist)
 
 WEIGHT_NAME = 'best'
-BATCHSIZE_PER_CARD = 8
+BATCHSIZE_PER_CARD = 4
 
-solver = MyFrame(DinkNet34, dice_bce_loss, 2e-4)
+solver = FusionFrame(DinkNet34CMMP, dice_bce_loss, 2e-4)
 batchsize = torch.cuda.device_count() * BATCHSIZE_PER_CARD
 
 with open(os.path.join(ROOT, 'train.txt')) as file:
     imagelist = file.readlines()
 trainlist = list(map(lambda x: x[:-1], imagelist))
-train_dataset = ImageFolder(trainlist, ROOT)
+train_dataset = TLCGISDataset(trainlist, ROOT)
 train_data_loader = torch.utils.data.DataLoader(
     train_dataset,
     batch_size=batchsize,
     shuffle=True,
     num_workers=0)
-
-with open(os.path.join(ROOT, 'valid.txt')) as file:
-    imagelist = file.readlines()
-validlist = list(map(lambda x: x[:-1], imagelist))
-val_dataset = ImageFolder(validlist, ROOT)
-val_data_loader = torch.utils.data.DataLoader(
-    val_dataset,
-    batch_size=batchsize,
-    shuffle=True,
-    num_workers=0)
     
-tic = time()
+timer = time()
 no_optim = 0
 total_epoch = 300
 train_epoch_best_loss = 100.
@@ -83,13 +75,13 @@ for epoch in range(1, total_epoch + 1):
     data_loader_iter = iter(train_data_loader)
     train_epoch_loss = 0
     tbar = tqdm(data_loader_iter)
-    for img, mask, index in tbar:
-        solver.set_input(img, mask)
+    for img, lpu, mask, index in tbar:
+        solver.set_input(img, lpu, mask)
         train_loss = solver.optimize()
         train_epoch_loss += train_loss
     train_epoch_loss /= len(data_loader_iter)
     print('********')
-    print('epoch:',epoch,'    time:',int(time()-tic))
+    print('epoch:',epoch,'    time:',int(time()-timer))
     print('train_loss:',train_epoch_loss)
     print('SHAPE:',SHAPE)
     
@@ -110,7 +102,6 @@ for epoch in range(1, total_epoch + 1):
         solver.load(os.path.join(output_dir, 'train_best.pth'))
         solver.update_lr(5.0, factor = True)
     
-
 
     import pdb
     pdb.set_trace()
