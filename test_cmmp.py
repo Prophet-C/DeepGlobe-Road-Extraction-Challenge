@@ -11,22 +11,24 @@ from time import time
 from tqdm import tqdm
 from utils.evaluator import Evaluator
 from utils.logger import save_logger
-from networks.dinknet import DinkNet34
-from framework import MyFrame
+from networks.dinknet_cmmp import DinkNet34CMMP
+from framework import MyFrame, FusionFrame
 from loss import dice_bce_loss
 from dataloader.data import ImageFolder
+from dataloader.dataloader import TLCGISDataset
 
 @torch.no_grad()
-def test(net, dataloader):
+def test(net, dataloader, save_result=False):
     evaluator = Evaluator(2)
     net.eval()
     evaluator.reset()
     data_iter = iter(dataloader)
     tbar = tqdm(data_iter)
     
-    index = 0
-    for img, mask, id in tbar:
-        pred = net.forward(img).cpu().data.numpy()
+    for img, lpu, mask, id in tbar:
+        img = img.cuda()
+        lpu = lpu.cuda()
+        pred = net.forward(img, lpu).cpu().data.numpy()
         pred[pred>0.5] = 1
         pred[pred<=0.5] = 0     
         mask = mask.data.numpy()
@@ -37,11 +39,12 @@ def test(net, dataloader):
         pred = np.where((pred==0)|(pred==1), pred^1, pred)
         
         evaluator.add_batch_sklearn(mask, pred)
-        img_dir = output_dir + '/images/'
-        os.makedirs(img_dir, exist_ok=True)
-        temp = np.concatenate((mask*255, 255*np.ones((mask.shape[0], 10)),pred*255), axis = 1)
-        cv2.imwrite(img_dir +id[0]+'_compare.png',temp)
-        index = index + 1
+
+        if save_result:
+            img_dir = output_dir + '/images/'
+            os.makedirs(img_dir, exist_ok=True)
+            temp = np.concatenate((mask*255, 255*np.ones((mask.shape[0], 10)),pred*255), axis = 1)
+            cv2.imwrite(img_dir +id[0]+'_compare.png',temp)
         
     class_index = 1
     Acc = evaluator.Pixel_Accuracy()
@@ -56,28 +59,28 @@ def test(net, dataloader):
           .format(Acc, Acc_class, mIoU, IoU, class_index, Precision, Recall, F1))
 
 
-output_dir = 'results/dink34_lpu_only_exp1'
+output_dir = 'results/dink34_fusion_exp1'
 save_logger(output_dir, filename="log_val.txt")
 
 SHAPE = (512,512)
 ROOT = 'dataset/TLCGIS/'
 
 WEIGHT_NAME = 'best'
-BATCHSIZE_PER_CARD = 8
 
-solver = MyFrame(DinkNet34, dice_bce_loss, 2e-4)
-batchsize = 1
+solver = FusionFrame(DinkNet34CMMP, dice_bce_loss, 2e-4)
+batchsize = 8
 
-with open(os.path.join(ROOT, 'valid.txt')) as file:
+with open(os.path.join(ROOT, 'train.txt')) as file:
     imagelist = file.readlines()
 validlist = list(map(lambda x: x[:-1], imagelist))
-val_dataset = ImageFolder(validlist, ROOT, val=True)
+val_dataset = TLCGISDataset(validlist, ROOT, val=False)
 val_data_loader = torch.utils.data.DataLoader(
     val_dataset,
     batch_size=batchsize,
     shuffle=False,
     num_workers=0)
 
+print(os.path.join(output_dir, 'train_best.pth'))
 solver.load(os.path.join(output_dir, 'train_best.pth'))
 net = solver.net
 test(net, val_data_loader)

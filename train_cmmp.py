@@ -15,35 +15,12 @@ from networks.dinknet import DinkNet34
 from networks.dinknet_cmmp import DinkNet34CMMP
 from framework import MyFrame, FusionFrame
 from loss import dice_bce_loss
-from data import ImageFolder
-from dataloader import TLCGISDataset
+from dataloader.data import ImageFolder
+from dataloader.dataloader import TLCGISDataset
+from test_cmmp import test
 
-@torch.no_grad()
-def test(net, dataloader):
-    evaluator = Evaluator(2)
-    net.eval()
-    evaluator.reset()
-    data_iter = iter(dataloader)
-    tbar = tqdm(data_iter)
 
-    for img, mask in tbar:
-        pred = net.forward(img).cpu().data.numpy().squeeze(1)
-        pred[pred>0.5] = 1
-        pred[pred<=0.5] = 0
-        evaluator.add_batch(mask, pred)
-
-    Acc = evaluator.Pixel_Accuracy()
-    Acc_class = evaluator.Pixel_Accuracy_Class()
-    mIoU = evaluator.Mean_Intersection_over_Union()
-    IoU = evaluator.Intersection_over_Union()
-    Precision = evaluator.Pixel_Precision()
-    Recall = evaluator.Pixel_Recall()
-    F1 = evaluator.Pixel_F1()
-    print("Val results:")
-    print("Acc:{}, Acc_class:{}, mIoU:{}, IoU:{}, Precision:{}, Recall:{}, F1:{}"
-          .format(Acc, Acc_class, mIoU, IoU, Precision, Recall, F1))
-
-output_dir = 'results/dink34_fusion_exp0'
+output_dir = 'results/dink34_fusion_exp1'
 save_logger(output_dir, force_merge=True)
 
 SHAPE = (512,512)
@@ -65,6 +42,16 @@ train_data_loader = torch.utils.data.DataLoader(
     train_dataset,
     batch_size=batchsize,
     shuffle=True,
+    num_workers=0)
+
+with open(os.path.join(ROOT, 'train.txt')) as file:
+    imagelist = file.readlines()
+validlist = list(map(lambda x: x[:-1], imagelist))
+val_dataset = TLCGISDataset(validlist, ROOT, val=False)
+val_data_loader = torch.utils.data.DataLoader(
+    val_dataset,
+    batch_size=batchsize,
+    shuffle=False,
     num_workers=0)
     
 timer = time()
@@ -92,6 +79,8 @@ for epoch in range(1, total_epoch + 1):
         train_epoch_best_loss = train_epoch_loss
         print("Save latest model:")
         solver.save(os.path.join(output_dir, 'train_best.pth'))
+        print("Start evaluation on val dataset:")
+        test(solver.net, val_data_loader, save_result=False)
     if no_optim > 6:
         print('early stop at %d epoch' % epoch)
         print('early stop at %d epoch' % epoch)

@@ -61,7 +61,7 @@ class DinkNet34CMMP(nn.Module):
         self.net_L = DinkNet34_AE()
         self.net_L = self.net_L.cuda()
 
-        self.dem_blocks = []
+        self.dem_blocks = nn.ModuleList()
         for layer in range(0, len(channel_size)):
             self.dem_blocks.append(DEMBlock(channel_size[layer], ssp_level).cuda())
 
@@ -112,7 +112,7 @@ class DinkNet34CMMP(nn.Module):
         d3_I, d3_L = self.dem_blocks[5](d3_I, d3_L)
 
         d2_I = self.net_I.decoder2(d3_I) + e1_I
-        d2_L = self.net_I.decoder2(d3_I) + e1_I
+        d2_L = self.net_L.decoder2(d3_L) + e1_L
         d2_I, d2_L = self.dem_blocks[6](d2_I, d2_L)
 
         d1_I = self.net_I.decoder1(d2_I)

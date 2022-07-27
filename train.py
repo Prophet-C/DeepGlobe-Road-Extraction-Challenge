@@ -14,7 +14,7 @@ from utils.logger import save_logger
 from networks.dinknet import DinkNet34
 from framework import MyFrame
 from loss import dice_bce_loss
-from data import ImageFolder
+from dataloader.data import ImageFolder
 
 @torch.no_grad()
 def test(net, dataloader):

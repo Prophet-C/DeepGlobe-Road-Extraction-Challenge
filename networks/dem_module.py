@@ -45,8 +45,7 @@ class DEMBlock(nn.Module):
                 info_vector.append(F.max_pool2d(chunk, (int(h/region_dim), int(w/region_dim))))
 
         global_vector = torch.cat(info_vector, 1)
-
-        global_vector = self.fc_global(global_vector.squeeze())
+        global_vector = self.fc_global(global_vector.squeeze(2).squeeze(2))
         global_info = global_vector.unsqueeze(2).unsqueeze(3).repeat(1, 1, h, w)
 
         total_info = torch.cat((local_info, global_info), dim=1)

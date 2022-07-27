@@ -107,19 +107,21 @@ def multi_loader(id, root, val=False):
     lpu = cv2.imread(os.path.join(lpu_root+'/{}.png').format(id))
     mask = cv2.imread(os.path.join(mask_root+'/{}.png').format(id), cv2.IMREAD_GRAYSCALE)
     img, lpu, mask = resize(img, lpu, mask, (512, 512))
-    img = randomHueSaturationValue(img,
-                                hue_shift_limit=(-30, 30),
-                                sat_shift_limit=(-5, 5),
-                                val_shift_limit=(-15, 15))
-    
-    img, lpu, mask = randomShiftScaleRotate(img, lpu, mask,
-                                    shift_limit=(-0.1, 0.1),
-                                    scale_limit=(-0.1, 0.1),
-                                    aspect_limit=(-0.1, 0.1),
-                                    rotate_limit=(-0, 0))
-    img, lpu, mask = randomHorizontalFlip(img, lpu, mask)
-    img, lpu, mask = randomVerticleFlip(img, lpu, mask)
-    img, lpu, mask = randomRotate90(img, lpu, mask)
+
+    if not val:
+        img = randomHueSaturationValue(img,
+                                    hue_shift_limit=(-30, 30),
+                                    sat_shift_limit=(-5, 5),
+                                    val_shift_limit=(-15, 15))
+        
+        img, lpu, mask = randomShiftScaleRotate(img, lpu, mask,
+                                        shift_limit=(-0.1, 0.1),
+                                        scale_limit=(-0.1, 0.1),
+                                        aspect_limit=(-0.1, 0.1),
+                                        rotate_limit=(-0, 0))
+        img, lpu, mask = randomHorizontalFlip(img, lpu, mask)
+        img, lpu, mask = randomVerticleFlip(img, lpu, mask)
+        img, lpu, mask = randomRotate90(img, lpu, mask)
     
     mask = np.expand_dims(mask, axis=2)
     img = np.array(img, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
