@@ -14,7 +14,7 @@ from utils.logger import save_logger
 from networks.dinknet import DinkNet34
 from framework import MyFrame
 from loss import dice_bce_loss
-from dataloader.rgb_data import ImageFolder
+from dataloader.rgb_dataset import ImageFolder
 
 @torch.no_grad()
 def test(net, dataloader):
@@ -45,7 +45,7 @@ output_dir = 'results/dink34_test_input_size'
 save_logger(output_dir)
 
 SHAPE = (512,512)
-ROOT = 'dataset/TLCGIS/'
+ROOT = 'data/TLCGIS/'
 # imagelist = filter(lambda x: x.find('sat')!=-1, os.listdir(ROOT))
 # trainlist = map(lambda x: x[:-8], imagelist)
 

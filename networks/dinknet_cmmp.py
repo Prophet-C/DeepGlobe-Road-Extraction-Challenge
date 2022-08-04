@@ -79,6 +79,9 @@ class DinkNet34CMMP(nn.Module):
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
+        # self.dem_blocks.apply(self._init_weights)
+        self.apply(self._init_weights)
+
 
     def forward(self, input_I, input_L):
 
@@ -127,3 +130,7 @@ class DinkNet34CMMP(nn.Module):
         out = self.finalconv3(out)
 
         return torch.sigmoid(out)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
+            nn.init.xavier_uniform_(module.weight)

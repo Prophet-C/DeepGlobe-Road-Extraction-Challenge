@@ -32,3 +32,11 @@ class dice_bce_loss(nn.Module):
         a =  self.bce_loss(y_pred, y_true)
         b =  self.soft_dice_loss(y_true, y_pred)
         return a + b
+
+class bce_loss(nn.Module):
+    def __init__(self, batch=True):
+        super(bce_loss, self).__init__()
+        self.bce_loss = nn.BCELoss()
+        
+    def __call__(self, y_true, y_pred):
+        return self.bce_loss(y_pred, y_true)

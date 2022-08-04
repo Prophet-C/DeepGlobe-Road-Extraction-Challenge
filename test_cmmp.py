@@ -14,8 +14,8 @@ from utils.logger import save_logger
 from networks.dinknet_cmmp import DinkNet34CMMP
 from framework import MyFrame, FusionFrame
 from loss import dice_bce_loss
-from dataloader.rgb_data import ImageFolder
-from dataloader.fusion_data import TLCGISDataset
+from dataloader.rgb_dataset import ImageFolder
+from dataloader.fusion_dataset import TLCGISDataset
 
 @torch.no_grad()
 def test(net, dataloader, save_result=False):
@@ -58,13 +58,15 @@ def test(net, dataloader, save_result=False):
     print("Acc:{:.2f}, Acc_class:{:.2f}, mIoU:{:.2f}, IoU:{:.2f}(class{}), Precision:{:.2f}, Recall:{:.2f}, F1:{:.2f}"
           .format(Acc*100, Acc_class*100, mIoU*100, IoU*100, class_index, Precision*100, Recall*100, F1*100))
 
+    return IoU*100
+
 if __name__ == '__main__':
 
     output_dir = 'results/dink34_fusion_exp1'
     save_logger(output_dir, filename="log_test.txt")
 
     SHAPE = (512,512)
-    ROOT = 'dataset/TLCGIS/'
+    ROOT = 'data/TLCGIS/'
 
     WEIGHT_NAME = 'best'
 

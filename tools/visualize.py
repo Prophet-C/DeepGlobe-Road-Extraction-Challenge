@@ -3,8 +3,8 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-view_list = 'dataset/TLCGIS/view.txt'
-data_path = 'dataset/TLCGIS/rgb'
+view_list = 'data/TLCGIS/view.txt'
+data_path = 'data/TLCGIS/rgb'
 
 with open(view_list) as file:
     lines = file.readlines()

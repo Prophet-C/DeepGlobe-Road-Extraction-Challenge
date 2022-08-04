@@ -1,3 +1,4 @@
+from random import random
 import torch 
 from torch.utils.data import Dataset
 
@@ -92,12 +93,34 @@ def randomRotate90(image, lpu, mask, u=0.5):
 
     return image, lpu, mask
 
+def randomRotate(image, lpu, mask, u=0.5):
+    rotete_times = np.random.randint(4)
+    image=np.rot90(image, rotete_times)
+    lpu=np.rot90(lpu, rotete_times)
+    mask=np.rot90(mask, rotete_times)
+
+    return image, lpu, mask
+
 def resize(image, lpu, mask, shape):
     image = cv2.resize(image, shape)
     lpu = cv2.resize(lpu, shape)
     mask = cv2.resize(mask, shape)
 
     return image, lpu, mask
+
+def random_crop(image, lpu, mask, crop_size=[0.7, 0.9]):
+    h, w, c = image.shape
+    crop_size = crop_size[np.random.randint(len(crop_size))]
+    h_crop = int(h * crop_size)
+    w_crop = int(w * crop_size)
+
+    starth = h//2-(h_crop//2)
+    startw = w//2-(w_crop//2)
+    image = image[startw:startw+w_crop,starth:starth+h_crop]
+    lpu = lpu[startw:startw+w_crop,starth:starth+h_crop]
+    mask = mask[startw:startw+w_crop,starth:starth+h_crop]
+
+    return resize(image, lpu, mask, (h, w))
 
 def multi_loader(id, root, val=False):
     img_root = os.path.join(root, 'rgb')
@@ -132,10 +155,33 @@ def multi_loader(id, root, val=False):
     #mask = abs(mask-1) 
     return img, lpu, mask
 
+def simple_loader(id, root, val=False):
+    img_root = os.path.join(root, 'rgb')
+    lpu_root = os.path.join(root, 'depth_lpu')
+    mask_root = os.path.join(root, 'mask')
+    img = cv2.imread(os.path.join(img_root+'/{}.png').format(id))
+    lpu = cv2.imread(os.path.join(lpu_root+'/{}.png').format(id))
+    mask = cv2.imread(os.path.join(mask_root+'/{}.png').format(id), cv2.IMREAD_GRAYSCALE)
+    img, lpu, mask = resize(img, lpu, mask, (512, 512))
+
+    if not val:
+        img, lpu, mask = randomHorizontalFlip(img, lpu, mask)
+        img, lpu, mask = randomVerticleFlip(img, lpu, mask)
+        img, lpu, mask = randomRotate(img, lpu, mask)
+        img, lpu, mask = random_crop(img, lpu, mask)
+    
+    mask = np.expand_dims(mask, axis=2)
+    img = np.array(img, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
+    lpu = np.array(lpu, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
+    mask = np.array(mask, np.float32).transpose(2,0,1)
+    mask[mask>=0.5] = 1
+    mask[mask<=0.5] = 0
+    return img, lpu, mask
+
 class TLCGISDataset(Dataset):
-    def __init__(self, trainlist, root, val=False):
+    def __init__(self, trainlist, root, val=False, loader=multi_loader):
         self.ids = trainlist
-        self.loader = multi_loader
+        self.loader = loader
         self.root = root
         self.val = val
 

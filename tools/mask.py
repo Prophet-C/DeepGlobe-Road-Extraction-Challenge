@@ -4,7 +4,7 @@ import numpy as np
 
 
 # create new masks where road is 1 and background is 0
-root = 'dataset/TLCGIS/'
+root = 'data/TLCGIS/'
 folder = 'mask'
 new_folder = 'new_mask'
 

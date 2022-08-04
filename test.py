@@ -14,7 +14,7 @@ from utils.logger import save_logger
 from networks.dinknet import DinkNet34
 from framework import MyFrame
 from loss import dice_bce_loss
-from dataloader.rgb_data import ImageFolder
+from dataloader.rgb_dataset import ImageFolder
 
 @torch.no_grad()
 def test(net, dataloader, save_result=False):
@@ -60,7 +60,7 @@ output_dir = 'results/dink34_lpu_only_exp0'
 save_logger(output_dir, filename="log_test.txt")
 
 SHAPE = (512,512)
-ROOT = 'dataset/TLCGIS/'
+ROOT = 'data/TLCGIS/'
 
 WEIGHT_NAME = 'best'
 
