@@ -27,7 +27,7 @@ if __name__ == '__main__':
     random.seed(0)
     np.random.seed(0)
     
-    output_dir = 'results/dink34_fusion_exp3_reproduce'
+    output_dir = 'results/dink34_fusion_exp4_reproduce'
     save_logger(output_dir, force_merge=True)
 
     SHAPE = (512,512)
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         shuffle=True,
         num_workers=0)
 
-    with open(os.path.join(ROOT, 'train.txt')) as file:
+    with open(os.path.join(ROOT, 'valid.txt')) as file:
         imagelist = file.readlines()
     validlist = list(map(lambda x: x[:-1], imagelist))
     val_dataset = TLCGISDataset(validlist, ROOT, val=True, loader=simple_loader)
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         
     timer = time()
     no_optim = 0
-    total_epoch = 3
+    total_epoch = 6
     train_epoch_best_loss = 100.
     val_best = 0
     for epoch in range(1, total_epoch + 1):
@@ -90,8 +90,10 @@ if __name__ == '__main__':
             print("Start evaluation on val dataset:")
             IoU = test(solver.net, val_data_loader, save_result=False)
             if IoU > val_best:
+                if val_best != 0:
+                    os.remove(os.path.join(output_dir, 'val_best_{:.2f}.pth'.format(val_best)))
                 val_best = IoU
-                solver.save(os.path.join(output_dir, 'val_best_{}.pth'.format(val_best)))
+                solver.save(os.path.join(output_dir, 'val_best_{:.2f}.pth'.format(val_best)))
         if no_optim > 6:
             print('early stop at %d epoch' % epoch)
             print('early stop at %d epoch' % epoch)
