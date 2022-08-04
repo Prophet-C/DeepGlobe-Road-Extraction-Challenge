@@ -95,12 +95,12 @@ def resize(image, mask, shape):
     return image, mask
 
 def default_loader(id, root, val=False):
-    img_root = os.path.join(root, 'rgb')
+    img_root = os.path.join(root, 'depth_lpu')
     mask_root = os.path.join(root, 'mask')
     img = cv2.imread(os.path.join(img_root+'/{}.png').format(id))
     mask = cv2.imread(os.path.join(mask_root+'/{}.png').format(id), cv2.IMREAD_GRAYSCALE)
     
-    img, mask = resize(img, mask, (512, 512))
+    img, mask = resize(img, mask, (480, 480))
 
     if not val:
         img = randomHueSaturationValue(img,

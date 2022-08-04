@@ -14,17 +14,16 @@ from utils.logger import save_logger
 from networks.dinknet import DinkNet34
 from framework import MyFrame
 from loss import dice_bce_loss
-from dataloader.data import ImageFolder
+from dataloader.rgb_data import ImageFolder
 
 @torch.no_grad()
-def test(net, dataloader):
+def test(net, dataloader, save_result=False):
     evaluator = Evaluator(2)
     net.eval()
     evaluator.reset()
     data_iter = iter(dataloader)
     tbar = tqdm(data_iter)
     
-    index = 0
     for img, mask, id in tbar:
         pred = net.forward(img).cpu().data.numpy()
         pred[pred>0.5] = 1
@@ -37,11 +36,12 @@ def test(net, dataloader):
         pred = np.where((pred==0)|(pred==1), pred^1, pred)
         
         evaluator.add_batch_sklearn(mask, pred)
-        img_dir = output_dir + '/images/'
-        os.makedirs(img_dir, exist_ok=True)
-        temp = np.concatenate((mask*255, 255*np.ones((mask.shape[0], 10)),pred*255), axis = 1)
-        cv2.imwrite(img_dir +id[0]+'_compare.png',temp)
-        index = index + 1
+
+        if save_result:
+            img_dir = output_dir + '/images/'
+            os.makedirs(img_dir, exist_ok=True)
+            temp = np.concatenate((mask*255, 255*np.ones((mask.shape[0], 10)),pred*255), axis = 1)
+            cv2.imwrite(img_dir +id[0]+'_compare.png',temp)
         
     class_index = 1
     Acc = evaluator.Pixel_Accuracy()
@@ -52,23 +52,22 @@ def test(net, dataloader):
     Recall = evaluator.Pixel_Recall()
     F1 = evaluator.Pixel_F1()
     print("Val results:")
-    print("Acc:{}, Acc_class:{}, mIoU:{}, IoU:{}(class{}), Precision:{}, Recall:{}, F1:{}"
-          .format(Acc, Acc_class, mIoU, IoU, class_index, Precision, Recall, F1))
+    print("Acc:{:.2f}, Acc_class:{:.2f}, mIoU:{:.2f}, IoU:{:.2f}(class{}), Precision:{:.2f}, Recall:{:.2f}, F1:{:.2f}"
+          .format(Acc*100, Acc_class*100, mIoU*100, IoU*100, class_index, Precision*100, Recall*100, F1*100))
 
 
-output_dir = 'results/dink34_lpu_only_exp1'
-save_logger(output_dir, filename="log_val.txt")
+output_dir = 'results/dink34_lpu_only_exp0'
+save_logger(output_dir, filename="log_test.txt")
 
 SHAPE = (512,512)
 ROOT = 'dataset/TLCGIS/'
 
 WEIGHT_NAME = 'best'
-BATCHSIZE_PER_CARD = 8
 
 solver = MyFrame(DinkNet34, dice_bce_loss, 2e-4)
-batchsize = 1
+batchsize = 8
 
-with open(os.path.join(ROOT, 'valid.txt')) as file:
+with open(os.path.join(ROOT, 'test.txt')) as file:
     imagelist = file.readlines()
 validlist = list(map(lambda x: x[:-1], imagelist))
 val_dataset = ImageFolder(validlist, ROOT, val=True)

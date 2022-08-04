@@ -14,8 +14,8 @@ from utils.logger import save_logger
 from networks.dinknet_cmmp import DinkNet34CMMP
 from framework import MyFrame, FusionFrame
 from loss import dice_bce_loss
-from dataloader.data import ImageFolder
-from dataloader.dataloader import TLCGISDataset
+from dataloader.rgb_data import ImageFolder
+from dataloader.fusion_data import TLCGISDataset
 
 @torch.no_grad()
 def test(net, dataloader, save_result=False):
@@ -55,32 +55,33 @@ def test(net, dataloader, save_result=False):
     Recall = evaluator.Pixel_Recall()
     F1 = evaluator.Pixel_F1()
     print("Val results:")
-    print("Acc:{}, Acc_class:{}, mIoU:{}, IoU:{}(class{}), Precision:{}, Recall:{}, F1:{}"
-          .format(Acc, Acc_class, mIoU, IoU, class_index, Precision, Recall, F1))
+    print("Acc:{:.2f}, Acc_class:{:.2f}, mIoU:{:.2f}, IoU:{:.2f}(class{}), Precision:{:.2f}, Recall:{:.2f}, F1:{:.2f}"
+          .format(Acc*100, Acc_class*100, mIoU*100, IoU*100, class_index, Precision*100, Recall*100, F1*100))
 
+if __name__ == '__main__':
 
-output_dir = 'results/dink34_fusion_exp1'
-save_logger(output_dir, filename="log_val.txt")
+    output_dir = 'results/dink34_fusion_exp1'
+    save_logger(output_dir, filename="log_test.txt")
 
-SHAPE = (512,512)
-ROOT = 'dataset/TLCGIS/'
+    SHAPE = (512,512)
+    ROOT = 'dataset/TLCGIS/'
 
-WEIGHT_NAME = 'best'
+    WEIGHT_NAME = 'best'
 
-solver = FusionFrame(DinkNet34CMMP, dice_bce_loss, 2e-4)
-batchsize = 8
+    solver = FusionFrame(DinkNet34CMMP, dice_bce_loss, 2e-4)
+    batchsize = 8
 
-with open(os.path.join(ROOT, 'train.txt')) as file:
-    imagelist = file.readlines()
-validlist = list(map(lambda x: x[:-1], imagelist))
-val_dataset = TLCGISDataset(validlist, ROOT, val=False)
-val_data_loader = torch.utils.data.DataLoader(
-    val_dataset,
-    batch_size=batchsize,
-    shuffle=False,
-    num_workers=0)
+    with open(os.path.join(ROOT, 'test.txt')) as file:
+        imagelist = file.readlines()
+    validlist = list(map(lambda x: x[:-1], imagelist))
+    val_dataset = TLCGISDataset(validlist, ROOT, val=True)
+    val_data_loader = torch.utils.data.DataLoader(
+        val_dataset,
+        batch_size=batchsize,
+        shuffle=False,
+        num_workers=0)
 
-print(os.path.join(output_dir, 'train_best.pth'))
-solver.load(os.path.join(output_dir, 'train_best.pth'))
-net = solver.net
-test(net, val_data_loader)
+    print(os.path.join(output_dir, 'train_best.pth'))
+    solver.load(os.path.join(output_dir, 'train_best (3)_86.70.pth'))
+    net = solver.net
+    test(net, val_data_loader, False)

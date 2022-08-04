@@ -14,7 +14,7 @@ from utils.logger import save_logger
 from networks.dinknet import DinkNet34
 from framework import MyFrame
 from loss import dice_bce_loss
-from dataloader.data import ImageFolder
+from dataloader.rgb_data import ImageFolder
 
 @torch.no_grad()
 def test(net, dataloader):
@@ -41,7 +41,7 @@ def test(net, dataloader):
     print("Acc:{}, Acc_class:{}, mIoU:{}, IoU:{}, Precision:{}, Recall:{}, F1:{}"
           .format(Acc, Acc_class, mIoU, IoU, Precision, Recall, F1))
 
-output_dir = 'results/dink34_lpu_only_exp1'
+output_dir = 'results/dink34_test_input_size'
 save_logger(output_dir)
 
 SHAPE = (512,512)
