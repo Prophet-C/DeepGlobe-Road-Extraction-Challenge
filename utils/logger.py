@@ -3,8 +3,6 @@ import os
 import os.path as osp
 import sys
 
-import yaml
-
 
 def mkdir_if_missing(dirname):
     """Create dirname if it is missing."""

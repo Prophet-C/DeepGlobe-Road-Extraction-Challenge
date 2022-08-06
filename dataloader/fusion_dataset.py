@@ -1,7 +1,7 @@
 from random import random
 import torch 
 from torch.utils.data import Dataset
-
+import torchvision.transforms as T
 import cv2
 import numpy as np
 import os
@@ -109,18 +109,18 @@ def resize(image, lpu, mask, shape):
     return image, lpu, mask
 
 def random_crop(image, lpu, mask, crop_size=[0.7, 0.9]):
-    h, w, c = image.shape
+    c, h, w = image.shape
     crop_size = crop_size[np.random.randint(len(crop_size))]
-    h_crop = int(h * crop_size)
-    w_crop = int(w * crop_size)
+    transforms = torch.nn.Sequential(
+        T.RandomCrop((int(h*crop_size), int(w*crop_size))),
+        T.Resize((h, w)),
+    )
 
-    starth = h//2-(h_crop//2)
-    startw = w//2-(w_crop//2)
-    image = image[startw:startw+w_crop,starth:starth+h_crop]
-    lpu = lpu[startw:startw+w_crop,starth:starth+h_crop]
-    mask = mask[startw:startw+w_crop,starth:starth+h_crop]
+    image = transforms(torch.from_numpy(image.copy())).numpy()
+    lpu = transforms(torch.from_numpy(lpu.copy())).numpy()
+    mask = transforms(torch.from_numpy(mask.copy())).numpy()
 
-    return resize(image, lpu, mask, (h, w))
+    return image, lpu, mask
 
 def multi_loader(id, root, val=False):
     img_root = os.path.join(root, 'rgb')
@@ -168,12 +168,15 @@ def simple_loader(id, root, val=False):
         img, lpu, mask = randomHorizontalFlip(img, lpu, mask)
         img, lpu, mask = randomVerticleFlip(img, lpu, mask)
         img, lpu, mask = randomRotate(img, lpu, mask)
-        img, lpu, mask = random_crop(img, lpu, mask)
-    
+
     mask = np.expand_dims(mask, axis=2)
     img = np.array(img, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
     lpu = np.array(lpu, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
     mask = np.array(mask, np.float32).transpose(2,0,1)
+
+    if not val:
+        img, lpu, mask = random_crop(img, lpu, mask)
+
     mask[mask>=0.5] = 1
     mask[mask<=0.5] = 0
     return img, lpu, mask

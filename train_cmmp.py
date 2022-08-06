@@ -27,7 +27,9 @@ if __name__ == '__main__':
     random.seed(0)
     np.random.seed(0)
     
-    output_dir = 'results/dink34_fusion_exp1'
+    data_loader = simple_loader
+    output_dir = 'results/dink34_fusion_exp6_reproduce_correct_randomcrop'
+    loss_func = bce_loss
     save_logger(output_dir, force_merge=True)
 
     SHAPE = (512,512)
@@ -38,23 +40,23 @@ if __name__ == '__main__':
     WEIGHT_NAME = 'best'
     BATCHSIZE_PER_CARD = 4
 
-    solver = FusionFrame(DinkNet34CMMP, dice_bce_loss, 2e-4)
+    solver = FusionFrame(DinkNet34CMMP, loss_func, 2e-4)
     batchsize = torch.cuda.device_count() * BATCHSIZE_PER_CARD
 
     with open(os.path.join(ROOT, 'train.txt')) as file:
         imagelist = file.readlines()
     trainlist = list(map(lambda x: x[:-1], imagelist))
-    train_dataset = TLCGISDataset(trainlist, ROOT)
+    train_dataset = TLCGISDataset(trainlist, ROOT, loader=data_loader)
     train_data_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=batchsize,
         shuffle=True,
         num_workers=0)
 
-    with open(os.path.join(ROOT, 'train.txt')) as file:
+    with open(os.path.join(ROOT, 'valid.txt')) as file:
         imagelist = file.readlines()
     validlist = list(map(lambda x: x[:-1], imagelist))
-    val_dataset = TLCGISDataset(validlist, ROOT, val=False)
+    val_dataset = TLCGISDataset(validlist, ROOT, val=True, loader=data_loader)
     val_data_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=batchsize,
@@ -65,6 +67,7 @@ if __name__ == '__main__':
     no_optim = 0
     total_epoch = 300
     train_epoch_best_loss = 100.
+    val_best = 0
     for epoch in range(1, total_epoch + 1):
         data_loader_iter = iter(train_data_loader)
         train_epoch_loss = 0
@@ -87,7 +90,13 @@ if __name__ == '__main__':
             print("Save latest model:")
             solver.save(os.path.join(output_dir, 'train_best.pth'))
             print("Start evaluation on val dataset:")
-            test(solver.net, val_data_loader, save_result=False)
+            IoU = test(solver.net, val_data_loader, save_result=False)
+            if IoU > val_best:
+                if val_best != 0:
+                    os.remove(os.path.join(output_dir, 'val_best_{:.2f}.pth'.format(val_best)))
+                val_best = IoU
+                solver.save(os.path.join(output_dir, 'val_best_{:.2f}.pth'.format(val_best)))
+
         if no_optim > 6:
             print('early stop at %d epoch' % epoch)
             print('early stop at %d epoch' % epoch)
@@ -97,8 +106,5 @@ if __name__ == '__main__':
                 break
             solver.load(os.path.join(output_dir, 'train_best.pth'))
             solver.update_lr(5.0, factor = True)
-        
 
-        import pdb
-        pdb.set_trace()
     print('Finish!')
