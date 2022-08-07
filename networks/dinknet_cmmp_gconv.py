@@ -130,9 +130,6 @@ class DinkNet34CMMP_gconv(nn.Module):
         out = self.finalrelu2(out)
         out = self.finalconv3(out)
 
-        import pdb
-        pdb.set_trace()
-
         return torch.sigmoid(out)
 
     def _init_weights(self, module):
