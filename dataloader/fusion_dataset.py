@@ -2,6 +2,7 @@ from random import random
 import torch 
 from torch.utils.data import Dataset
 import torchvision.transforms as T
+import torchvision.transforms.functional as TF
 import cv2
 import numpy as np
 import os
@@ -109,16 +110,14 @@ def resize(image, lpu, mask, shape):
     return image, lpu, mask
 
 def random_crop(image, lpu, mask, crop_size=[0.7, 0.9]):
-    c, h, w = image.shape
+    c, h0, w0 = image.shape
     crop_size = crop_size[np.random.randint(len(crop_size))]
-    transforms = torch.nn.Sequential(
-        T.RandomCrop((int(h*crop_size), int(w*crop_size))),
-        T.Resize((h, w)),
-    )
 
-    image = transforms(torch.from_numpy(image.copy())).numpy()
-    lpu = transforms(torch.from_numpy(lpu.copy())).numpy()
-    mask = transforms(torch.from_numpy(mask.copy())).numpy()
+    i, j, h, w = T.RandomCrop.get_params(torch.tensor(image), output_size=[int(h0*crop_size), int(w0*crop_size)])
+
+    image = TF.resize(TF.crop(torch.tensor(image), i, j, h, w), (h0, w0)).numpy()
+    lpu = TF.resize(TF.crop(torch.tensor(lpu), i, j, h, w), (h0, w0)).numpy()
+    mask = TF.resize(TF.crop(torch.tensor(mask), i, j, h, w), (h0, w0)).numpy()
 
     return image, lpu, mask
 
@@ -170,12 +169,15 @@ def simple_loader(id, root, val=False):
         img, lpu, mask = randomRotate(img, lpu, mask)
 
     mask = np.expand_dims(mask, axis=2)
-    img = np.array(img, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
-    lpu = np.array(lpu, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
+    img = np.array(img, np.float32).transpose(2,0,1)
+    lpu = np.array(lpu, np.float32).transpose(2,0,1)
     mask = np.array(mask, np.float32).transpose(2,0,1)
 
     if not val:
         img, lpu, mask = random_crop(img, lpu, mask)
+
+    img = img/255.0 * 3.2 - 1.6
+    lpu = lpu/255.0 * 3.2 - 1.6
 
     mask[mask>=0.5] = 1
     mask[mask<=0.5] = 0

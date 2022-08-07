@@ -14,6 +14,7 @@ from utils.evaluator import Evaluator
 from utils.logger import save_logger
 from networks.dinknet import DinkNet34
 from networks.dinknet_cmmp import DinkNet34CMMP
+from networks.dinknet_cmmp_gconv import dlinknet_cmmp_gconv
 from framework import MyFrame, FusionFrame
 from loss import dice_bce_loss, bce_loss
 from dataloader.rgb_dataset import ImageFolder
@@ -23,13 +24,9 @@ from test_cmmp import test
 
 if __name__ == '__main__':
     
-    torch.manual_seed(0)
-    random.seed(0)
-    np.random.seed(0)
-    
-    data_loader = simple_loader
-    output_dir = 'results/dink34_fusion_exp6_reproduce_correct_randomcrop'
-    loss_func = bce_loss
+    data_loader = multi_loader
+    output_dir = 'results/dink34_fusion_exp7_test'
+    loss_func = dice_bce_loss
     save_logger(output_dir, force_merge=True)
 
     SHAPE = (512,512)
@@ -40,7 +37,8 @@ if __name__ == '__main__':
     WEIGHT_NAME = 'best'
     BATCHSIZE_PER_CARD = 4
 
-    solver = FusionFrame(DinkNet34CMMP, loss_func, 2e-4)
+    net = dlinknet_cmmp_gconv()
+    solver = FusionFrame(net, loss_func, 2e-4)
     batchsize = torch.cuda.device_count() * BATCHSIZE_PER_CARD
 
     with open(os.path.join(ROOT, 'train.txt')) as file:
@@ -51,7 +49,7 @@ if __name__ == '__main__':
         train_dataset,
         batch_size=batchsize,
         shuffle=True,
-        num_workers=0)
+        num_workers=16)
 
     with open(os.path.join(ROOT, 'valid.txt')) as file:
         imagelist = file.readlines()
@@ -61,7 +59,7 @@ if __name__ == '__main__':
         val_dataset,
         batch_size=batchsize,
         shuffle=False,
-        num_workers=0)
+        num_workers=16)
         
     timer = time()
     no_optim = 0
