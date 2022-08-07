@@ -24,6 +24,7 @@ from test_cmmp import test
 
 if __name__ == '__main__':
     
+    multi_gpu = False
     data_loader = multi_loader
     output_dir = 'results/dink34_fusion_exp7_test'
     loss_func = dice_bce_loss
@@ -31,15 +32,17 @@ if __name__ == '__main__':
 
     SHAPE = (512,512)
     ROOT = 'data/TLCGIS/'
-    # imagelist = filter(lambda x: x.find('sat')!=-1, os.listdir(ROOT))
-    # trainlist = map(lambda x: x[:-8], imagelist)
 
     WEIGHT_NAME = 'best'
-    BATCHSIZE_PER_CARD = 4
+    BATCHSIZE_PER_CARD = 16
 
     net = dlinknet_cmmp_gconv()
-    solver = FusionFrame(net, loss_func, 2e-4)
-    batchsize = torch.cuda.device_count() * BATCHSIZE_PER_CARD
+    solver = FusionFrame(net, loss_func, 2e-4, multi_gpu=multi_gpu)
+
+    if multi_gpu:
+        batchsize = torch.cuda.device_count() * BATCHSIZE_PER_CARD
+    else: 
+        batchsize = BATCHSIZE_PER_CARD
 
     with open(os.path.join(ROOT, 'train.txt')) as file:
         imagelist = file.readlines()

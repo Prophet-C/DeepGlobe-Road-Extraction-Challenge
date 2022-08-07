@@ -81,8 +81,7 @@ class DinkNet34CMMP_gconv(nn.Module):
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
-        # self.dem_blocks.apply(self._init_weights)
-        self.apply(self._init_weights)
+        self.dem_blocks.apply(self._init_weights)
 
 
     def forward(self, input_I, input_L):
@@ -130,6 +129,9 @@ class DinkNet34CMMP_gconv(nn.Module):
         out = self.finalconv2(out)
         out = self.finalrelu2(out)
         out = self.finalconv3(out)
+
+        import pdb
+        pdb.set_trace()
 
         return torch.sigmoid(out)
 
