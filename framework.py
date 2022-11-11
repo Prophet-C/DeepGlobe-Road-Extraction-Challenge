@@ -7,8 +7,8 @@ import numpy as np
 
 class MyFrame():
     def __init__(self, net, loss, lr=2e-4, evalmode = False):
-        self.net = net().cuda()
-        self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
+        self.net = net.cuda()
+        # self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
         self.optimizer = torch.optim.Adam(params=self.net.parameters(), lr=lr)
         #self.optimizer = torch.optim.RMSprop(params=self.net.parameters(), lr=lr)
         self.loss = loss()
@@ -82,10 +82,12 @@ class MyFrame():
         self.old_lr = new_lr
 
 class FusionFrame():
-    def __init__(self, net, loss, lr=2e-4, evalmode = False, multi_gpu=False):
+    def __init__(self, net, loss, lr=2e-4, evalmode = False, multi_gpu=False, data_para=False):
         self.net = net.cuda()
-        if multi_gpu:
-            self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
+        # if multi_gpu:
+        #     self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
+        # if data_para:
+        #     self.net = torch.nn.DataParallel(self.net, device_ids=range(1))
         self.optimizer = torch.optim.Adam(params=self.net.parameters(), lr=lr)
         self.loss = loss()
         self.old_lr = lr

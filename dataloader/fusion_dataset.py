@@ -144,6 +144,10 @@ def multi_loader(id, root, val=False):
         img, lpu, mask = randomHorizontalFlip(img, lpu, mask)
         img, lpu, mask = randomVerticleFlip(img, lpu, mask)
         img, lpu, mask = randomRotate90(img, lpu, mask)
+        import pdb
+        pdb.set_trace()
+        print("some here")
+
     
     mask = np.expand_dims(mask, axis=2)
     img = np.array(img, np.float32).transpose(2,0,1)/255.0 * 3.2 - 1.6
@@ -199,6 +203,7 @@ class TLCGISDataset(Dataset):
         img = torch.Tensor(img)
         lpu = torch.Tensor(lpu)
         mask = torch.Tensor(mask)
+        
         return img, lpu, mask, id
 
     def __len__(self):

@@ -5,3 +5,7 @@ results/
 submits/
 *.png
 *-backup*
+data/
+/data/
+data/deepglobe/img/test/951_sat.jpg
+data/*

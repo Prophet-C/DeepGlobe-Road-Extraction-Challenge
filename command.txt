@@ -1,0 +1,5 @@
+nohup train_deepglobe.py -log=stdout -loglevel=ERROR &
+
+nohup sh run_model.sh &
+
+nohup sh run_model.sh > output1.txt >2&1

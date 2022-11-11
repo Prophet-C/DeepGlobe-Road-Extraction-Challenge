@@ -81,7 +81,7 @@ class DinkNet34CMMP_gconv(nn.Module):
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
-        self.dem_blocks.apply(self._init_weights)
+        # self.dem_blocks.apply(self._init_weights)
 
 
     def forward(self, input_I, input_L):
@@ -150,5 +150,50 @@ def dlinknet_cmmp_gconv():
         "decoder",
         "decoder",
         "decoder",
+    ])
+    return model
+
+def dlinknet_cmmp_gconv_old_param_gf():
+    s = 1.0/3.0
+    model = DinkNet34CMMP_gconv(
+    gnconv=[
+        partial(gnconv, order=5, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=4, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=3, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=2, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=2, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=3, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=4, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=5, s=s, gflayer=GlobalLocalFilter),
+    ])
+    return model
+
+def dlinknet_cmmp_gconv_new_param_gf():
+    s = 1.0/3.0
+    model = DinkNet34CMMP_gconv(
+    gnconv=[
+        partial(gnconv, order=2, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=3, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=4, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=5, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=5, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=3, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=2, s=s, gflayer=GlobalLocalFilter),
+        partial(gnconv, order=2, s=s, gflayer=GlobalLocalFilter),
+    ])
+    return model
+
+def dlinknet_cmmp_gconv_new_param():
+    s = 1.0/3.0
+    model = DinkNet34CMMP_gconv(
+    gnconv=[
+        partial(gnconv, order=2, s=s),
+        partial(gnconv, order=3, s=s),
+        partial(gnconv, order=4, s=s),
+        partial(gnconv, order=5, s=s),
+        partial(gnconv, order=4, s=s),
+        partial(gnconv, order=3, s=s),
+        partial(gnconv, order=2, s=s),
+        partial(gnconv, order=2, s=s),
     ])
     return model

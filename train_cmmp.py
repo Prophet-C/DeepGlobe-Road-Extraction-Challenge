@@ -14,19 +14,26 @@ from utils.evaluator import Evaluator
 from utils.logger import save_logger
 from networks.dinknet import DinkNet34
 from networks.dinknet_cmmp import DinkNet34CMMP
-from networks.dinknet_cmmp_gconv import dlinknet_cmmp_gconv
+from networks.dinknet_cmmp_gconv import dlinknet_cmmp_gconv, dlinknet_cmmp_gconv_new_param, dlinknet_cmmp_gconv_new_param_gf
 from framework import MyFrame, FusionFrame
 from loss import dice_bce_loss, bce_loss
 from dataloader.rgb_dataset import ImageFolder
 from dataloader.fusion_dataset import TLCGISDataset, multi_loader, simple_loader
 from test_cmmp import test
+import argparse
 
+
+# parser = argparse.ArgumentParser()
+# parser.add_argument("--local_rank", type=int)
+# args = parser.parse_args()
 
 if __name__ == '__main__':
     
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+
     multi_gpu = False
     data_loader = multi_loader
-    output_dir = 'results/dink34_fusion_exp7_test'
+    output_dir = 'results/dink34_fusion_exp18_repeat_2'
     loss_func = dice_bce_loss
     save_logger(output_dir, force_merge=True)
 
@@ -34,9 +41,9 @@ if __name__ == '__main__':
     ROOT = 'data/TLCGIS/'
 
     WEIGHT_NAME = 'best'
-    BATCHSIZE_PER_CARD = 16
+    BATCHSIZE_PER_CARD = 2
 
-    net = dlinknet_cmmp_gconv()
+    net = DinkNet34CMMP()
     solver = FusionFrame(net, loss_func, 2e-4, multi_gpu=multi_gpu)
 
     if multi_gpu:
